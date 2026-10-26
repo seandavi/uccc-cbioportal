@@ -8,6 +8,12 @@ ch := 'docker compose exec -T cbioportal-database sh -c'
 # so `up` recreates the app exactly when its settings or logo change. Run compose through just.
 export UCCC_FILES_SHA := `cat config/uccc.properties config/application.properties branding/uccc_logo.png 2>/dev/null | sha256sum | cut -c1-12`
 
+# The public database dump this deployment was loaded from: cBioPortal's dump_2026_10_18_v3_1_0,
+# pinned as a revision of the Hugging Face mirror (upstream keeps only the last five weekly dumps).
+dump_repo := 'cBioPortal/publicDatabase'
+dump_rev := '58be468cffe7'
+dump_root := '/data/davsean/uccc-cbioportal/dump/dump_2026_10_18_v3_1_0'
+
 # List recipes
 default:
     @just --list
@@ -40,7 +46,16 @@ logs *args:
 restart:
     docker compose restart cbioportal
 
-# Fresh database only: start ClickHouse and load the parquet dump (~1.5 h). Set CBIO_DUMP_DIR in .env.
+# Download the pinned dump (87 GB) into dump_root, then verify it
+fetch-dump:
+    hf download {{dump_repo}} --repo-type dataset --revision {{dump_rev}} --include 'data/*' --include publication.json --local-dir {{dump_root}}
+    just verify-dump
+
+# Check every parquet file against the sha256 in the dump's publication.json
+verify-dump:
+    cd {{dump_root}} && python3 -c 'import json; [print(f["sha256"], f["path"]) for f in json.load(open("publication.json"))["files"]]' | sha256sum -c --quiet && echo DUMP_OK
+
+# Fresh database only: start ClickHouse and load the parquet dump (~1.5 h). Run `just fetch-dump` first.
 load-dump:
     docker compose up -d cbioportal-database
     docker compose exec -T cbioportal-database bash /load_parquet.sh

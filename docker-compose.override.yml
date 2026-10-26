@@ -40,7 +40,7 @@ services:
       - ./scripts/noop.sh:/docker-entrypoint-initdb.d/002_load_seed.sh:ro
       - ./scripts/noop.sh:/docker-entrypoint-initdb.d/003_load_derived_tables.sh:ro
       - ./scripts/load_parquet.sh:/load_parquet.sh:ro
-      - ${CBIO_DUMP_DIR:-/data/davsean/tmp/cbioportal}:/dump:ro
+      - ${CBIO_DUMP_DIR:-/data/davsean/uccc-cbioportal/dump/dump_2026_10_18_v3_1_0/data}:/dump:ro
 
 networks:
   proxy:

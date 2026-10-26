@@ -10,7 +10,7 @@ cohorts to it.
 | Tailnet | https://onclappc02.tail892754.ts.net:8443 (`tailscale serve`) |
 | Host | onclappc02 |
 | cBioPortal | `cbioportal/cbioportal:7.2.1`, database schema 3.1.0, ClickHouse 24.10 |
-| Data | the cbioportal.org public database dump, snapshot 2026-10-22: 551 studies, 193 GB in ClickHouse |
+| Data | cbioportal.org's public database dump `dump_2026_10_18_v3_1_0`: 551 studies, 193 GB in ClickHouse |
 
 ## How this repo is put together
 
@@ -33,12 +33,31 @@ cohorts to it.
 ```bash
 cp .env.example .env        # set CLICKHOUSE_PASSWORD; set CBIO_DUMP_DIR if the dump isn't in the default place
 just config                 # generate config/application.properties and data/ from the pinned image
+just fetch-dump             # fresh database only: download and verify the pinned dump (87 GB)
 just load-dump              # fresh database only: loads the parquet dump (~1.5 h)
 just up                     # start or update; safe to re-run
 just deploy                 # what CD runs: pull, up, record the commit in .deployed
 just serve-tailnet          # once per host
 just check                  # API health, study count, schema version
 ```
+
+### The source dump
+
+cBioPortal publishes a weekly parquet export of the cbioportal.org public database at
+https://public-db-dump.assets.cbioportal.org/ and keeps only the last five weeks. Every export is
+also a commit in the Hugging Face dataset
+[`cBioPortal/publicDatabase`](https://huggingface.co/datasets/cBioPortal/publicDatabase), and older
+exports stay available there by revision. This deployment was loaded from `dump_2026_10_18_v3_1_0`
+(schema 3.1.0), which is Hugging Face revision `58be468cffe7`. The justfile pins that revision.
+
+- The local copy is at `/data/davsean/uccc-cbioportal/dump/dump_2026_10_18_v3_1_0/`: `data/*.parquet`
+  plus `publication.json`, which holds each file's sha256.
+- `just verify-dump` checks the local copy against those hashes.
+- `just fetch-dump` downloads the dump again.
+- Row counts of the largest loaded tables, to check a reload against:
+  - `genetic_alteration_derived`: 10,291,416,609
+  - `generic_assay_data_derived`: 3,836,755,804
+  - `mutation_derived`: 18,869,727
 
 ### Add a study
 

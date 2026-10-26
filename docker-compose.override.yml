@@ -1,0 +1,50 @@
+# UCCC deployment on onclappc02, layered over upstream's docker-compose.yml (vendored unchanged).
+# - Ports bind to localhost only. Public access is via Traefik (uccc-cbioportal.cancerdatasci.org,
+#   orange-cloud), tailnet access via `just serve-tailnet`.
+# - ClickHouse is loaded from the public-portal parquet dump (`just load-dump`), not the seed +
+#   importer path, so the seed and derived-table init steps are no-ops.
+services:
+  cbioportal:
+    ports: !override
+      - "127.0.0.1:8085:8080"
+    environment:
+      # Layer our settings over the generated application.properties; keys in uccc.properties win.
+      SPRING_CONFIG_ADDITIONALLOCATION: file:/cbioportal-webapp/uccc.properties
+    volumes:
+      - ./config/uccc.properties:/cbioportal-webapp/uccc.properties:ro
+      # Served at /images/ from webapp/images (not /cbioportal-webapp/images as the docs say: cBioPortal#12454).
+      - ./branding/uccc_logo.png:/cbioportal-webapp/webapp/images/uccc_logo.png:ro
+    networks:
+      - proxy
+    labels:
+      # Orange-cloud hostname: tls=true with no cert resolver, so Traefik serves the Cloudflare
+      # Origin Certificate (*.cancerdatasci.org). See monode infrastructure/compose/README.md § TLS strategy.
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.uccc-cbioportal.rule=Host(`uccc-cbioportal.cancerdatasci.org`)"
+      - "traefik.http.routers.uccc-cbioportal.entrypoints=websecure"
+      - "traefik.http.routers.uccc-cbioportal.tls=true"
+      - "traefik.http.services.uccc-cbioportal.loadbalancer.server.port=8080"
+
+  cbioportal-database:
+    ports: !override
+      - "127.0.0.1:8124:8123"
+      - "127.0.0.1:9010:9000"
+    volumes:
+      - ./scripts/noop.sh:/docker-entrypoint-initdb.d/002_load_seed.sh:ro
+      - ./scripts/noop.sh:/docker-entrypoint-initdb.d/003_load_derived_tables.sh:ro
+      - ./scripts/load_parquet.sh:/load_parquet.sh:ro
+      - ${CBIO_DUMP_DIR:-/data/davsean/tmp/cbioportal}:/dump:ro
+
+networks:
+  proxy:
+    external: true
+
+volumes:
+  # ponytail: these volumes were created by the first deployment under the project name
+  # `cbioportal-docker-compose`; pinning the names keeps the loaded 193 GB database.
+  # A fresh host gets new, empty volumes with these names and loads them with `just load-dump`.
+  cbioportal_clickhouse_data:
+    name: cbioportal-docker-compose_cbioportal_clickhouse_data
+  cbioportal_mongo_data:
+    name: cbioportal-docker-compose_cbioportal_mongo_data

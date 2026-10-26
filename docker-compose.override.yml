@@ -10,6 +10,8 @@ services:
     environment:
       # Layer our settings over the generated application.properties; keys in uccc.properties win.
       SPRING_CONFIG_ADDITIONALLOCATION: file:/cbioportal-webapp/uccc.properties
+      # Set by the justfile from the mounted files' contents; see UCCC_FILES_SHA there.
+      UCCC_FILES_SHA: ${UCCC_FILES_SHA:-}
     volumes:
       - ./config/uccc.properties:/cbioportal-webapp/uccc.properties:ro
       # Served at /images/ from webapp/images (not /cbioportal-webapp/images as the docs say: cBioPortal#12454).

@@ -35,6 +35,7 @@ cp .env.example .env        # set CLICKHOUSE_PASSWORD; set CBIO_DUMP_DIR if the 
 just config                 # generate config/application.properties and data/ from the pinned image
 just load-dump              # fresh database only: loads the parquet dump (~1.5 h)
 just up                     # start or update; safe to re-run
+just deploy                 # what CD runs: pull, up, record the commit in .deployed
 just serve-tailnet          # once per host
 just check                  # API health, study count, schema version
 ```

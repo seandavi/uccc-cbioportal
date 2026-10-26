@@ -1,7 +1,7 @@
 # uccc-cbioportal
 
-A [cBioPortal](https://www.cbioportal.org/) instance for the University of Colorado Anschutz Cancer
-Center (UCCC). It holds every public cbioportal.org study, and UCCC disease groups can add public
+A [cBioPortal](https://www.cbioportal.org/) instance for the University of Colorado Cancer Center
+(UCCC). It holds every public cbioportal.org study, and UCCC disease groups can add public
 cohorts to it.
 
 | | |

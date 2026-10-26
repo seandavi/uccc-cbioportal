@@ -7,3 +7,4 @@ data/*
 study/*
 .env.temp
 !study/.gitkeep
+.deployed

@@ -4,6 +4,10 @@ set dotenv-load
 
 ch := 'docker compose exec -T cbioportal-database sh -c'
 
+# Compose doesn't see changes inside bind-mounted files. This hash goes into the app's environment,
+# so `up` recreates the app exactly when its settings or logo change. Run compose through just.
+export UCCC_FILES_SHA := `cat config/uccc.properties config/application.properties branding/uccc_logo.png 2>/dev/null | sha256sum | cut -c1-12`
+
 # List recipes
 default:
     @just --list
@@ -17,6 +21,14 @@ config:
 # Start or update everything (safe to re-run)
 up:
     docker compose up -d
+
+# Deploy a clean checkout. Idempotent: compose recreates only services whose config, image or
+# mounted settings changed. Records what was deployed in .deployed.
+deploy:
+    test -z "$(git status --porcelain --untracked-files=no)" || { echo "uncommitted changes; deploy a clean checkout"; exit 1; }
+    docker compose pull -q
+    docker compose up -d
+    echo "$(git describe --always --dirty) $(git rev-parse --abbrev-ref HEAD) $(date -u +%FT%TZ)" > .deployed
 
 down:
     docker compose down

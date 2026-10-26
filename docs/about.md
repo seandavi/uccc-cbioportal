@@ -30,5 +30,16 @@ When you publish results based on cBioPortal, please cite:
   AACR Project GENIE Biopharma Collaborative in cBioPortal. *Cancer Research*. 2023.
   [PubMed](https://pubmed.ncbi.nlm.nih.gov/37668528/)
 
+## Acknowledging this portal
+
+This portal is a University of Colorado Cancer Center resource. If you use it in a publication,
+presentation or grant, please acknowledge the NCI Cancer Center Support Grant, for example:
+
+> This research used the University of Colorado Cancer Center cBioPortal, supported by the
+> National Cancer Institute through the Cancer Center Support Grant P30CA046934.
+
+Then please send the citation to the contact above, which helps the cancer center report the
+portal's use.
+
 The source for this deployment is
 [seandavi/uccc-cbioportal](https://github.com/seandavi/uccc-cbioportal).

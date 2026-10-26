@@ -59,6 +59,27 @@ second database (see the issues).
 3. `just config`, then `just up`. The `cbioportal-migration` service brings the schema up to date
    before the app starts, and the app refuses to start if the schema version doesn't match.
 
+## Query limits
+
+The portal is public and accepts any combination of studies and genes, so the web app's queries
+are capped:
+
+- **Each query:** 90 s, 16 GiB and 16 threads. These are set in `spring.datasource.url` in
+  `config/uccc.properties`, and they don't apply to imports or `derive-tables`.
+- **ClickHouse overall:** `mem_limit: 192g`. ClickHouse refuses work above about 173 GB, which is
+  0.9 of that limit.
+
+Measured 2026-10-26 through headless Chromium, with no limits set:
+
+| Page | Load time |
+|---|---|
+| `msk_impact_50k_2026` study summary | 18 s |
+| BRCA PanCancer co-expression (ERBB2) | 37 s |
+| `msk_chord_2024` study summary | 7 s |
+
+The slowest query took 16.7 s on a cold cache and 0.5 s warm. Peak memory for one query was
+1.7 GiB. Capping a query at 16 threads doubles that warm query to 1 s.
+
 ## Gotchas found while setting this up
 
 - The image serves custom images from `/cbioportal-webapp/webapp/images/`, not the path in the

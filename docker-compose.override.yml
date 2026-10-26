@@ -27,6 +27,10 @@ services:
       - "traefik.http.services.uccc-cbioportal.loadbalancer.server.port=8080"
 
   cbioportal-database:
+    # ClickHouse sizes its own memory cap (0.9x) from the cgroup limit, so queries fail cleanly
+    # instead of taking the host's RAM (#3).
+    # ponytail: 192g is a guess for `just derive-tables`; size it from the #4 measurement.
+    mem_limit: 192g
     ports: !override
       - "127.0.0.1:8124:8123"
       - "127.0.0.1:9010:9000"
